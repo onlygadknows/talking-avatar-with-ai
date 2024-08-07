@@ -20,23 +20,39 @@ app.get("/voices", async (req, res) => {
 });
 
 app.post("/tts", async (req, res) => {
-  const userMessage = await req.body.message;
+  const userMessage = req.body.message;
+  console.log("Received message for TTS:", userMessage); // Debug
+
   const defaultMessages = await sendDefaultMessages({ userMessage });
   if (defaultMessages) {
+    console.log("Sending default messages:", defaultMessages); // Debug
     res.send({ messages: defaultMessages });
     return;
   }
+
   let openAImessages;
   try {
     openAImessages = await openAIChain.invoke({
       question: userMessage,
       format_instructions: parser.getFormatInstructions(),
     });
+    console.log("OpenAI response:", openAImessages); // Debug
   } catch (error) {
-    openAImessages = defaultResponse;
+    console.error("Error invoking OpenAI:", error); // Debug
+    openAImessages = { messages: defaultResponse }; // Ensure default structure
   }
-  openAImessages = await lipSync({ messages: openAImessages.messages });
-  res.send({ messages: openAImessages });
+
+  const messages = Array.isArray(openAImessages.messages) ? openAImessages.messages : [];
+  console.log("Messages passed to lipSync:", messages); // Debug
+
+  try {
+    const lipSyncMessages = await lipSync({ messages });
+    console.log("Lip sync messages:", lipSyncMessages); // Debug
+    res.send({ messages: lipSyncMessages });
+  } catch (error) {
+    console.error("Error in lipSync:", error); // Debug
+    res.status(500).send({ error: "An error occurred during lip sync processing." });
+  }
 });
 
 app.post("/sts", async (req, res) => {

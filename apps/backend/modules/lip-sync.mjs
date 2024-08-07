@@ -8,6 +8,11 @@ const RETRY_DELAY = 0;
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const lipSync = async ({ messages }) => {
+  // Validate that messages is an array
+  if (!Array.isArray(messages)) {
+    throw new TypeError("Expected 'messages' to be an array but received:", messages);
+  }
+
   await Promise.all(
     messages.map(async (message, index) => {
       const fileName = `audios/message_${index}.mp3`;
@@ -45,5 +50,6 @@ const lipSync = async ({ messages }) => {
 
   return messages;
 };
+
 
 export { lipSync };
